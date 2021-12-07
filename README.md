@@ -8,12 +8,12 @@ To create a connectivity map and matrix run the following functions:
     3. `supply` - the number of elements supplied by each sector
     4. `sectors` - a list containing (lon, lat) points of the verticies of the sectors
   This can be step skiped if you already have this parameters
-2. `calculate_connectivity_matrix(first_lonlats, last_lonlats, supply, sectors)` - to create the connectivity matrix from the lagrangian model. This will return `C` - the connectivity matrix
-<p align="center">
-    <img src="https://github.com/yoelbassin/connectivityMap/blob/master/data/pictures/connectivity_matrix.png" width="300"/>
-</p>
-4. `categorize_sectors(sectors, C)` - to categorize the sectors by connectivity categories
-5. `plot_connectivity_pylygons(sectors, sector_categories)` \ `plot_connectivity_domain(sectors, sector_categories)` - this will plot the `sectors` and color each sector with an appropriate color to its value from `sector_categories` (i.e. `sector[i]` will be plotted with the color for the number at `sector_categories[i]`)
+2. `calculate_connectivity_matrix(first_lonlats, last_lonlats, supply, sectors)` - to create the connectivity matrix from the lagrangian model. This will return `C` - the connectivity matrix <p align="center">
+        <img src="https://github.com/yoelbassin/connectivityMap/blob/master/data/pictures/connectivity_matrix.png" width="300"/>
+    </p>
+3. `categorize_sectors(sectors, C)` - to categorize the sectors by connectivity categories
+
+4. `plot_connectivity_pylygons(sectors, sector_categories)` \ `plot_connectivity_domain(sectors, sector_categories)` - this will plot the `sectors` and color each sector with an appropriate color to its value from `sector_categories` (i.e. `sector[i]` will be plotted with the color for the number at `sector_categories[i]`)
 <p align="center">
     <img src="https://github.com/yoelbassin/connectivityMap/blob/master/data/pictures/connectivity_categories.png" width="460">
     <img src="https://github.com/yoelbassin/connectivityMap/blob/master/data/pictures/connectivity_categories_grid.png" width="400">
