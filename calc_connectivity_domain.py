@@ -42,7 +42,7 @@ o = PlastDrift(loglevel=30)
 o.set_config('seed:ocean_only', False)
 # for lazy:
 # o.add_reader_from_list(ncfiles_separate, lazy=True)
-o.add_reader([ncfiles])
+o.add_reader([ncreader])
 o.add_reader([reader_landmask])
 domain = [20, 37, 30, 41]
 delta = 0.2
