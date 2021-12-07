@@ -49,4 +49,4 @@ plt.imshow(C, cmap=cmap, interpolation='nearest', vmin=0.001)
 plt.show()
 
 # plot connectivity categories
-plot_connectivity_polygons(sectors=sectors, sector_categories=Sector_categories)
+plot_connectivity_polygons(sectors=sectors, sector_categories=Sector_categories, title="Categories", vmax=8, lut=8)
