@@ -11,7 +11,11 @@ To create a connectivity map and matrix run the following functions:
 2. `calculate_connectivity_matrix(first_lonlats, last_lonlats, supply, sectors)` - to create the connectivity matrix from the lagrangian model. This will return `C` - the connectivity matrix
 3. `categorize_sectors(sectors, C)` - to categorize the sectors by connectivity categories
 4. `plot_connectivity_pylygons(sectors, sector_categories)` \ `plot_connectivity_domain(sectors, sector_categories)` - this will plot the `sectors` and color each sector with an appropriate color to its value from `sector_categories` (i.e. `sector[i]` will be plotted with the color for the number at `sector_categories[i]`)
-
-![connectivity matrix](https://github.com/yoelbassin/connectivityMap/blob/master/data/pictures/connectivity_matrix.png?raw=true)
-
+<p align="center">
+    <img src="https://github.com/yoelbassin/connectivityMap/blob/master/data/pictures/connectivity_matrix.png" width="300"/>
+</p>
+<p align="center">
+    <img src="https://github.com/yoelbassin/connectivityMap/blob/master/data/pictures/connectivity_categories.png" width="450">
+    <img src="https://github.com/yoelbassin/connectivityMap/blob/master/data/pictures/connectivity_categories_grid.png" width="450">
+</p>
 
