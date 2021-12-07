@@ -754,11 +754,17 @@ def plot_connectivity_polygons(sectors=[], sector_categories=[], corners=[],
     for n, sector in enumerate(sectors):
         pgon = Polygon(tuple([(sector[0][i], sector[1][i]) for i in range(len(sector[0]))]))
         ax.add_geometries([pgon], crs=ccrs.PlateCarree(), facecolor=cmap((sector_categories[n]) / 8), alpha=0.8)
+        cx = pgon.representative_point().x
+        cy = pgon.representative_point().y
+        ax.annotate(str(n), (cx, cy))
+        
 
     # add colorbar
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(0, 8))
     sm._A = []
     plt.colorbar(sm, ax=ax)
+
+
 
     # add title
     ax.set_title(title, fontsize=24)
