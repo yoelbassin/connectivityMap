@@ -706,7 +706,7 @@ def plot_connectivity_map(sector_categories=[], sectors=[], corners=[],
 def plot_connectivity_polygons(sectors=[], sector_categories=[], corners=[],
                                figsize=(10, 6), title='', nan_color='white', bad_alpha=0,
                                coastline_color='black', ocean_color='white', colormap="viridis",
-                               vmin=None, vmax=None, lut=None):
+                               vmin=None, vmax=None, lut=None, numbering=False):
     """
     plots the connectivity categories of each sector
 
@@ -722,6 +722,7 @@ def plot_connectivity_polygons(sectors=[], sector_categories=[], corners=[],
     :param vmin: minimum value of sector_categories
     :param vmax: maximum value of sector_categories
     :param lut: if not None the colormap will be resampled to have lut entries in the lookup table
+    :param numbering: boolean, if True sector numbers will be annotated over the sectors
     """
     # data about the domain
     if not corners:
@@ -754,9 +755,10 @@ def plot_connectivity_polygons(sectors=[], sector_categories=[], corners=[],
     for n, sector in enumerate(sectors):
         pgon = Polygon(tuple([(sector[0][i], sector[1][i]) for i in range(len(sector[0]))]))
         ax.add_geometries([pgon], crs=ccrs.PlateCarree(), facecolor=cmap((sector_categories[n]) / 8), alpha=0.8)
-        cx = pgon.representative_point().x
-        cy = pgon.representative_point().y
-        ax.annotate(str(n), (cx, cy))
+        if numbering:
+            cx = pgon.representative_point().x
+            cy = pgon.representative_point().y
+            ax.annotate(str(n), (cx, cy))
         
 
     # add colorbar
