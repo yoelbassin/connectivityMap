@@ -15,7 +15,7 @@ To create a connectivity map and matrix run the following functions:
     <img src="https://github.com/yoelbassin/connectivityMap/blob/master/data/pictures/connectivity_matrix.png" width="300"/>
 </p>
 <p align="center">
-    <img src="https://github.com/yoelbassin/connectivityMap/blob/master/data/pictures/connectivity_categories.png" width="450">
-    <img src="https://github.com/yoelbassin/connectivityMap/blob/master/data/pictures/connectivity_categories_grid.png" width="450">
+    <img src="https://github.com/yoelbassin/connectivityMap/blob/master/data/pictures/connectivity_categories.png" width="460">
+    <img src="https://github.com/yoelbassin/connectivityMap/blob/master/data/pictures/connectivity_categories_grid.png" width="400">
 </p>
 
