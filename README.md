@@ -12,6 +12,6 @@ To create a connectivity map and matrix run the following functions:
 3. `categorize_sectors(sectors, C)` - to categorize the sectors by connectivity categories
 4. `plot_connectivity_pylygons(sectors, sector_categories)` \ `plot_connectivity_domain(sectors, sector_categories)` - this will plot the `sectors` and color each sector with an appropriate color to its value from `sector_categories` (i.e. `sector[i]` will be plotted with the color for the number at `sector_categories[i]`)
 
-![connectivity matrix](https://github.com/yoelbassin/connectivityMap/blob/master/data/pictures/connectivity_matrix.png?raw=true)
+![connectivity matrix](https://github.com/yoelbassin/connectivityMap/blob/master/data/pictures/connectivity_matrix.png?raw=true =250x)
 
 
