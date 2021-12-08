@@ -1,3 +1,11 @@
+# This file is part of ConnectivityMap module
+#
+# ConnectivityMap is a free module for creating a connectivity map 
+# and matrix from a lagrangian trajectory model
+#
+# Copyright 2021, Erick Fredj and Yoel Bassin, JCT, Israel
+
+
 import numpy as np
 from datetime import timedelta
 import pyproj
@@ -8,6 +16,10 @@ import matplotlib
 from opendrift.readers import reader_global_landmask
 from shapely.geometry.polygon import Polygon
 import cartopy.crs as ccrs
+
+"""
+This file contains the functions of the ConnectivityMap module.
+"""
 
 
 # Preprocessing and helpful functions
@@ -133,7 +145,7 @@ def sectors_from_shapefile(shapefile):
 # Seeding elements and running simulation
 
 def run_for_connectivity_polygons(opendrift_model, time=None, steps=None, duration=None,
-                                  end_time=None, time_step=None, depth=0, sectors=[], d_supply=10,
+                                  end_time=None, time_step=None, depth=0, sectors=[], supply_ammount=10,
                                   time_step_output=None):
     """
     seed and run OpenDrift model before creation of a connectivity map using polygon sectors
@@ -152,14 +164,15 @@ def run_for_connectivity_polygons(opendrift_model, time=None, steps=None, durati
     :param time_step_output: Time step at which element properties are stored and eventually written to file.
     Timedelta object or seconds. Default: same as time_step, meaning that all steps are stored
 
-    :return: {'lons': first_lons, 'lats': first_lats}, supply, sectors - the origin location of elements, the amount
-    supplied by each sector and the coordinates of the sectors
+    :return: {'lons': initial_lons, 'lats': initial_lats}, {'lons': final_lons, 'lats': final_lats},
+    supply, sectors - the origin location of elements, the amount supplied by each sector and the
+    coordinates of the sectors
     """
 
     ########################
     # Prepare for run
     ########################
-    supply = [d_supply] * len(sectors)
+    supply = [supply_ammount] * len(sectors)
 
     reader = list(opendrift_model.readers.items())[0][1]
 
@@ -187,8 +200,8 @@ def run_for_connectivity_polygons(opendrift_model, time=None, steps=None, durati
             lons=sector[0], lats=sector[1], number=supply[i], time=time, origin_marker=i, z=z)
 
     # get the original lons and lats of the seed
-    first_lons, first_lats = opendrift_model.get_lonlats()
-    first_lons, first_lats = copy.copy(first_lons)[:, 0], copy.copy(first_lats)[:, 0]
+    initial_lons, initial_lats = opendrift_model.get_lonlats()
+    initial_lons, initial_lats = copy.copy(initial_lons)[:, 0], copy.copy(initial_lats)[:, 0]
 
     ##########################
     # Running the simulation
@@ -205,15 +218,15 @@ def run_for_connectivity_polygons(opendrift_model, time=None, steps=None, durati
     lons, lats = opendrift_model.get_lonlats()
     firstlast = np.ma.notmasked_edges(lons, axis=1)
     index_of_last = firstlast[1][1]
-    last_x = lons.T[index_of_last, range(lons.T.shape[1])]
-    last_y = lats.T[index_of_last, range(lons.T.shape[1])]
+    final_lons = lons.T[index_of_last, range(lons.T.shape[1])]
+    final_lats = lats.T[index_of_last, range(lons.T.shape[1])]
 
-    return {'lons': first_lons, 'lats': first_lats}, {'lons': last_x, 'lats': last_y}, supply, sectors
+    return {'lons': initial_lons, 'lats': initial_lats}, {'lons': final_lons, 'lats': final_lats}, supply, sectors
 
 
 def run_for_connectivity_domain(opendrift_model, delta=None, domain=None,
                                 time=None, steps=None, duration=None, end_time=None, time_step=None,
-                                depth=0, supply_coords=[], d_supply=10,
+                                depth=0, supply_coords=[], supply_amount=10,
                                 _radius=100, time_step_output=None, reader_landmask=reader_global_landmask.Reader()):
     """
     seed and run OpenDrift model before creation of a connectivity map with sectors from a grid of the domain
@@ -231,15 +244,16 @@ def run_for_connectivity_domain(opendrift_model, delta=None, domain=None,
     :param time_step: interval between particles updates, in seconds or as timedelta. Default: 3600 seconds (1 hour)
     :param depth: depth at which the elements are seeded
     :param supply_coords: specific coordinates for elements seeding
-    :param d_supply: the amount of elements to supply at each sector
+    :param supply_amount: the amount of elements to supply at each sector
     :param _radius: scalar or array, radius in meters around each lon-lat pair, within which particles will be
     randomly seeded.
     :param time_step_output: Time step at which element properties are stored and eventually written to file.
     Timedelta object or seconds. Default: same as time_step, meaning that all steps are stored
     :param reader_landmask: (optional) reader to check if the elements are on land,
 
-    :return: {'lons': first_lons, 'lats': first_lats}, supply, sectors - the origin location of elements, the amount
-    supplied by each sector and the coordinates of the sectors
+    :return: {'lons': initial_lons, 'lats': initial_lats}, {'lons': final_lons, 'lats': final_lats},
+    supply, sectors - the origin location of elements, the amount supplied by each sector and the
+    coordinates of the sectors
     """
     ########################
     # Prepare for run
@@ -317,34 +331,34 @@ def run_for_connectivity_domain(opendrift_model, delta=None, domain=None,
     # containing a supply coordinate
     if supply_coords:
         for coords in supply_coords:
-            c_lon = coords[0]
-            c_lat = coords[1]
+            lon = coords[0]
+            lat = coords[1]
             # Check if the coordinate is within the domain
-            if not (xmax > c_lon > xmin
-                    and ymax > c_lat > ymin):
+            if not (xmax > lon > xmin
+                    and ymax > lat > ymin):
                 continue
             # find the sector the contains the coordinate
             # this assumes the domain is quadrangular (xmin, xmax, ymin, ymax)
             # and creates a grid where each cell is a sector, than translates the
             # cell index ([grid_x, grid_y]) to a number 's', an index of a one
             # dimensional array
-            grid_x = np.floor((c_lon - xmin) / delta)
-            grid_y = np.floor((c_lat - ymin) / delta)
+            grid_x_index = np.floor((lon - xmin) / delta)
+            grid_y_index = np.floor((lat - ymin) / delta)
 
-            s = round(grid_x * (len_y / delta) + grid_y)
+            final_sector = round(grid_x_index * (len_y / delta) + grid_y_index)
 
             try:
-                supply[s] += d_supply
+                supply[final_sector] += supply_amount
             except:
-                print("error:", grid_x, grid_y, c_lon,
-                      c_lat, s, "outside of domain")
+                print("error:", grid_x_index, grid_y_index, lon,
+                      lat, final_sector, "outside of domain")
 
     # If the seeding should be performed over the entire domain
     # (in all the sectors), add supply to the sectors that are in sea
     else:
         for i in range(len(supply)):
             if i not in sectors_on_land:
-                supply[i] += d_supply
+                supply[i] += supply_amount
 
     print('Seeding elements')
 
@@ -363,8 +377,8 @@ def run_for_connectivity_domain(opendrift_model, delta=None, domain=None,
                                           number=N, radius=_radius, time=time, origin_marker=i, z=z)
 
     # get the origin lons and lats of the seed
-    first_lons, first_lats = opendrift_model.get_lonlats()
-    first_lons, first_lats = copy.copy(first_lons)[:, 0], copy.copy(first_lats)[:, 0]
+    initial_lons, initial_lats = opendrift_model.get_lonlats()
+    initial_lons, initial_lats = copy.copy(initial_lons)[:, 0], copy.copy(initial_lats)[:, 0]
 
     print('Seed complete, running simulation')
     print('Running simulation')
@@ -384,22 +398,22 @@ def run_for_connectivity_domain(opendrift_model, delta=None, domain=None,
     lons, lats = opendrift_model.get_lonlats()
     firstlast = np.ma.notmasked_edges(lons, axis=1)
     index_of_last = firstlast[1][1]
-    last_x = lons.T[index_of_last, range(lons.T.shape[1])]
-    last_y = lats.T[index_of_last, range(lons.T.shape[1])]
+    final_lons = lons.T[index_of_last, range(lons.T.shape[1])]
+    final_lats = lats.T[index_of_last, range(lons.T.shape[1])]
 
-    return {'lons': first_lons, 'lats': first_lats}, {'lons': last_x, 'lats': last_y}, supply, sectors
+    return {'lons': initial_lons, 'lats': initial_lats}, {'lons': final_lons, 'lats': final_lats}, supply, sectors
 
 
 # Connectivity matrix and categories 
 
-def calculate_connectivity_matrix(first_lonlats, last_lonlats, supply_org, sectors,
+def calculate_connectivity_matrix(initial_lonlats, final_lonlats, supply, sectors,
                                   last_z=None, max_depth=None, min_depth=None,
                                   polygons=False):
     """
     Calculating the connectivity map and matrix after running the simulation
     :param first_lonlats: the origin location of the elements (at seed time, provided by run_for_connectivity_domain())
     :param last_lonlats: the location of the elements at the end of the simulation
-    :param supply_org: list of the amount supplied by each sector (provided by run_for_connectivity_domain())
+    :param supply: list of the amount supplied by each sector (provided by run_for_connectivity_domain())
     :param sectors: list of all the sectors, provided by run_for_connectivity_domain())
     :param max_depth: (optional) the max depth of elements for the connectivity map
     :param min_depth: (optional) the min depth of elements for the connectivity map
@@ -422,13 +436,13 @@ def calculate_connectivity_matrix(first_lonlats, last_lonlats, supply_org, secto
             max_depth = min_depth
 
     # get the current lons and lats of the elements (after the simulation run)
-    first_x = first_lonlats['lons']
-    first_y = first_lonlats['lats']
-    last_x = last_lonlats['lons']
-    last_y = last_lonlats['lats']
+    initial_lons = initial_lonlats['lons']
+    initial_lats = initial_lonlats['lats']
+    final_lons = final_lonlats['lons']
+    final_lats = final_lonlats['lats']
 
     # create a copy of the supply array to make the changes locally
-    supply = copy.copy(supply_org)
+    supply_copy = copy.copy(supply)
 
     print("starting analysis")
 
@@ -452,41 +466,41 @@ def calculate_connectivity_matrix(first_lonlats, last_lonlats, supply_org, secto
         # create bounding boxes for the polygons for faster intersection check
         boxes = [(np.min(sector[0]), np.max(sector[0]), np.min(sector[1]), np.max(sector[1])) for sector in sectors]
         # loop through the elements to count number of elements in each sector and create connectivity matrix
-        for _id in range(len(first_x)):
+        for _id in range(len(initial_lons)):
             # get the first and last location of the element
-            start_lon = first_x[_id]
-            start_lat = first_y[_id]
-            last_lon = last_x[_id]
-            last_lat = last_y[_id]
+            initial_lon = initial_lons[_id]
+            initial_lat = initial_lats[_id]
+            final_lon = final_lons[_id]
+            final_lat = final_lats[_id]
             if check_depth:
                 last_depth = last_z[_id]
 
-            i, j = -1, -1
+            initial_sector, final_sector = -1, -1
 
             # loop through the sectors and check if the element is inside one of the sectors
-            for n, sector in enumerate(sectors):
+            for sector_index, sector in enumerate(sectors):
                 # find the origin sector of the element
-                if i == -1 and boxes[n][1] >= start_lon >= boxes[n][0] and boxes[n][3] >= start_lat >= boxes[n][2]:
-                    if is_point_in_area(sector[0], sector[1], (start_lon, start_lat)):
-                        i = n
+                if initial_sector == -1 and boxes[sector_index][1] >= initial_lon >= boxes[sector_index][0] and boxes[sector_index][3] >= initial_lat >= boxes[sector_index][2]:
+                    if is_point_in_area(sector[0], sector[1], (initial_lon, initial_lat)):
+                        initial_sector = sector_index
                 # find the sector the element settled in
-                if j == -1 and boxes[n][1] >= last_lon >= boxes[n][0] and boxes[n][3] >= last_lat >= boxes[n][2]:
-                    if is_point_in_area(sector[0], sector[1], (last_lon, last_lat)):
-                        j = n
+                if final_sector == -1 and boxes[sector_index][1] >= final_lon >= boxes[sector_index][0] and boxes[sector_index][3] >= final_lat >= boxes[sector_index][2]:
+                    if is_point_in_area(sector[0], sector[1], (final_lon, final_lat)):
+                        final_sector = sector_index
                 # if both sectors were found, stop the check
-                if i != -1 and j != -1:
+                if initial_sector != -1 and final_sector != -1:
                     break
             # if the elements settled outside the sectors, ignore the element
             else:
-                supply[i] -= 1
+                supply_copy[initial_sector] -= 1
                 continue
             # check if the element depth is outside of the selected depth
             if check_depth and not max_depth >= last_depth >= min_depth:
-                supply[i] -= 1
+                supply_copy[initial_sector] -= 1
                 continue
             # if both sectors were found, add the pair to the connectivity matrix
-            if j != -1:
-                C[i, j] += 1
+            if final_sector != -1:
+                C[initial_sector, final_sector] += 1
 
         # return the connectivity matrix
         return C
@@ -499,12 +513,12 @@ def calculate_connectivity_matrix(first_lonlats, last_lonlats, supply_org, secto
     n_xmax = xmax - xmin
 
     # loop through elements to count number of elements in each sector and create connectivity matrix
-    for _id in range(len(first_x)):
+    for _id in range(len(initial_lons)):
         # get the first and last location of the element
-        start_lon = first_x[_id]
-        start_lat = first_y[_id]
-        last_lon = last_x[_id]
-        last_lat = last_y[_id]
+        initial_lon = initial_lons[_id]
+        initial_lat = initial_lat[_id]
+        final_lon = final_lon[_id]
+        final_lat = final_lats[_id]
         if check_depth:
             last_depth = last_z[_id]
 
@@ -513,40 +527,40 @@ def calculate_connectivity_matrix(first_lonlats, last_lonlats, supply_org, secto
         # and creates a grid where each cell is a sector, than translates the
         # cell index ([grid_x, grid_y]) to a number 'i', an index of a one
         # dimensional array
-        grid_x = np.floor((start_lon - xmin) / delta)
-        grid_y = np.floor((start_lat - ymin) / delta)
+        grid_x = np.floor((initial_lon - xmin) / delta)
+        grid_y = np.floor((initial_lat - ymin) / delta)
 
         # the origin sector
-        i = round(grid_x * (n_ymax / delta) + grid_y)
+        initial_sector = round(grid_x * (n_ymax / delta) + grid_y)
 
         # find the sector the element settled in
-        grid_x = np.floor((last_lon - xmin) / delta)
-        grid_y = np.floor((last_lat - ymin) / delta)
+        grid_x = np.floor((final_lon - xmin) / delta)
+        grid_y = np.floor((final_lat - ymin) / delta)
 
         # the sector the element settled in
-        s = round(grid_x * (n_ymax / delta) + grid_y)
+        final_sector = round(grid_x * (n_ymax / delta) + grid_y)
 
         # find elements that were seeded on land or that are out of domain, and remove them from the calculation
         # on land, i.e. the location haven't changed during the simulation
-        if last_lon == start_lon and last_lat == start_lat:
-            supply[i] -= 1
+        if final_lon == initial_lon and final_lat == initial_lat:
+            supply_copy[initial_sector] -= 1
             continue
         # outside of domain
-        if not (xmax > last_lon > xmin
-                and ymax > last_lat > ymin):
-            supply[i] -= 1
+        if not (xmax > final_lon > xmin
+                and ymax > final_lat > ymin):
+            supply_copy[initial_sector] -= 1
             continue
         # outside of chosen depth range
         if (check_depth and not
         max_depth >= last_depth >= min_depth):
-            supply[i] -= 1
+            supply_copy[initial_sector] -= 1
             continue
 
         # if both sectors were found, add the pair to the connectivity matrix
         try:
-            C[i, s] += 1
+            C[initial_sector, final_sector] += 1
         except:
-            print("error:", grid_x, grid_y, last_lon, last_lat, s)
+            print("error:", grid_x, grid_y, final_lon, final_lat, final_sector)
             raise (ValueError)
 
     print("Connectivity matrix created")
@@ -715,6 +729,7 @@ def plot_connectivity_polygons(sectors=[], sector_categories=[], corners=[],
     """
     plots the connectivity categories of each sector
 
+    :param sectors: the sectors to plot
     :param sector_categories:  connectivity categories of the sectors
     :param corners: the corner coordinates for the plot
     :param title: title for the plot
@@ -772,6 +787,84 @@ def plot_connectivity_polygons(sectors=[], sector_categories=[], corners=[],
     plt.colorbar(sm, ax=ax)
 
 
+
+    # add title
+    ax.set_title(title, fontsize=24)
+    plt.show()
+
+def plot_connectivity_network(sectors=[], connectivity_matrix=[], sector_categories=[], corners=[], 
+                               figsize=(10, 6), title='', nan_color='white', bad_alpha=0,
+                               coastline_color='black', ocean_color='white', colormap="viridis",
+                               vmin=None, vmax=None, lut=None, numbering=False):
+    """
+    plots the a network between the sectors
+
+    :param sectors: the sectors to plot
+    :param connectivity_matrix: the connectivity matrix of the sectors
+    :param sector_categories:  connectivity categories of the sectors
+    :param corners: the corner coordinates for the plot
+    :param title: title for the plot
+    :param nan_color: color for nan values
+    :param bad_alpha: transparency of nan_color
+    :param coastline_color: color for the coastline
+    :param ocean_color: color for the ocean
+    :param land_color: color for the land
+    :param colormap: the colormap for the plot
+    :param vmin: minimum value of sector_categories
+    :param vmax: maximum value of sector_categories
+    :param lut: if not None the colormap will be resampled to have lut entries in the lookup table
+    :param numbering: boolean, if True sector numbers will be annotated over the sectors
+    """
+    # data about the domain
+    if not corners:
+        boxes = np.array(
+            [[np.min(sector[0]), np.max(sector[0]), np.min(sector[1]), np.max(sector[1])] for sector in sectors])
+        corners = [min(boxes[:, 0]), max(boxes[:, 1]), min(boxes[:, 2]), max(boxes[:, 3])]
+
+    # set the colormap
+    cmap = plt.get_cmap(colormap, lut)
+    # set color of nan values
+    cmap.set_bad(color=nan_color, alpha=bad_alpha)
+
+    # projection
+    map_proj = cartopy.crs.PlateCarree()
+
+    # plot base map
+    fig = plt.figure(figsize=figsize)
+    ax = fig.add_subplot(111, projection=map_proj)
+    ax.coastlines(color=coastline_color)
+    ax.add_feature(cartopy.feature.OCEAN, facecolor=(ocean_color))
+    ax.add_feature(cartopy.feature.LAND, edgecolor='black')
+
+    # plot only within corners
+    ax.set_extent(corners)
+    # plot gridlines
+    ax.gridlines(draw_labels=True, dms=True,
+                 x_inline=False, y_inline=False)
+
+    # plot the sectors from polygons
+    for n, sector in enumerate(sectors):
+        pgon = Polygon(tuple([(sector[0][i], sector[1][i]) for i in range(len(sector[0]))]))
+        ax.add_geometries([pgon], crs=ccrs.PlateCarree(), facecolor=cmap((sector_categories[n]) / 8), alpha=0.8)
+        cx = pgon.representative_point().x
+        cy = pgon.representative_point().y
+        if numbering:
+            ax.annotate(str(n), (cx, cy))
+        for tar_n, tar_sector in enumerate(sectors):
+            pgon2 = Polygon(tuple([(tar_sector[0][i], tar_sector[1][i]) for i in range(len(tar_sector[0]))]))
+            cx2 = pgon2.representative_point().x
+            cy2 = pgon2.representative_point().y
+            weight = connectivity_matrix[n, tar_n]
+            if weight == 0:
+                continue
+            plt.plot([cx, cx2], [cy, cy2], linewidth=1, color='black', transform= cartopy.crs.Geodetic())
+
+        
+
+    # add colorbar
+    sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(0, 8))
+    sm._A = []
+    plt.colorbar(sm, ax=ax)
 
     # add title
     ax.set_title(title, fontsize=24)
