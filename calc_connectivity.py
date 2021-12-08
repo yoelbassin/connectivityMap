@@ -306,9 +306,10 @@ def run_for_connectivity_domain(opendrift_model, delta=None, domain=None,
             supply.append(0)
             # Check if the sector is in sea or on land, and if on land than
             # add it to the sectors_on_land list
-            if (reader_landmask.__on_land__(lon, lat) and reader_landmask.__on_land__(lon, lat + delta)
-                    and reader_landmask.__on_land__(lon + delta, lat + delta) and reader_landmask.__on_land__(
-                        lon + delta, lat)):
+            if (reader_landmask.__on_land__(np.array([lon]), np.array([lat])) 
+                    and reader_landmask.__on_land__(np.array([lon]), np.array([lat + delta]))
+                        and reader_landmask.__on_land__(np.array([lon + delta]), np.array([lat + delta]))
+                            and reader_landmask.__on_land__(np.array([lon + delta]), np.array([lat]))):
                 sectors_on_land.append(sec_num)
             sec_num += 1
 
@@ -657,6 +658,7 @@ def plot_connectivity_map(sector_categories=[], sectors=[], corners=[],
     cmap = plt.cm.get_cmap(colormap, lut)
     # set color of nan values
     cmap.set_bad(color=nan_color, alpha=bad_alpha)
+    cmap.set_under(color=nan_color, alpha=bad_alpha)
 
     # projection
     map_proj = cartopy.crs.PlateCarree()
@@ -664,15 +666,6 @@ def plot_connectivity_map(sector_categories=[], sectors=[], corners=[],
     # plot base map
     fig = plt.figure(figsize=figsize)
     ax = fig.add_subplot(111, projection=map_proj)
-    ax.coastlines(color=coastline_color)
-    ax.add_feature(cartopy.feature.OCEAN, facecolor=(ocean_color))
-    ax.add_feature(cartopy.feature.LAND, edgecolor='black')
-
-    # plot only within the corners
-    ax.set_extent(corners)
-    # plot the gridlines
-    ax.gridlines(draw_labels=True, dms=True,
-                 x_inline=False, y_inline=False)
 
     # reshape the categories for plotting
     sc_ = np.reshape(sector_categories, (-1, len(lat)))
@@ -680,6 +673,8 @@ def plot_connectivity_map(sector_categories=[], sectors=[], corners=[],
     # set min-max values for color bar
     if not vmin:
         vmin = np.nanmin(sector_categories)
+        if vmin == 0:
+            vmin = 0.00000001
     if not vmax:
         vmax = np.nanmax(sector_categories)
 
@@ -689,6 +684,16 @@ def plot_connectivity_map(sector_categories=[], sectors=[], corners=[],
                               sc_.T, vmin=vmin, vmax=vmax,
                               transform=map_proj,
                               cmap=cmap)
+
+    ax.coastlines(color=coastline_color)
+    ax.add_feature(cartopy.feature.OCEAN, facecolor=(ocean_color))
+    ax.add_feature(cartopy.feature.LAND, edgecolor='black')
+
+    # plot only within the corners
+    ax.set_extent(corners)
+    # plot the gridlines
+    ax.gridlines(draw_labels=True, dms=True,
+                 x_inline=False, y_inline=False)
 
     # add colorbar
     axpos = ax.get_position()
