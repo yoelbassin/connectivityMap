@@ -80,5 +80,9 @@ plot_connectivity_map(sectors=sectors, sector_categories=Nsettle_values, title="
 plot_connectivity_map(sectors=sectors, sector_categories=Nsupply_values, title="Nsupply")
 
 # %%
+# plot R values
+plot_connectivity_map(sectors=sectors,sector_categories=R_values, title="Settling/Supply factor")
+
+# %%
 # plot connectivity categories
 plot_connectivity_map(sectors=sectors, sector_categories=Sector_categories, title="Categories", vmax=8, lut=8)
