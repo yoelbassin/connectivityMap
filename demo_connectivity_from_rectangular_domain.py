@@ -1,3 +1,11 @@
+# This file is part of ConnectivityMap module
+#
+# ConnectivityMap is a free module for creating a connectivity map 
+# and matrix from a lagrangian trajectory model
+#
+# Copyright 2021, Erick Fredj and Yoel Bassin, JCT, Israel
+
+
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
@@ -5,7 +13,13 @@ from opendrift.readers import reader_netCDF_CF_generic, reader_global_landmask
 from opendrift.models.oceandrift import OceanDrift, timedelta
 from opendrift.models.plastdrift import PlastDrift
 from os import listdir
-from calc_connectivity import *
+from calculate_connectivity import *
+"""
+This demo is an example for the use of ConnectivityMap using a rectangular domain.
+The demo receives a rectangular domain and devides it into a grid. Using
+a lagrangian trajectory model it generates a connectivity map of the different cells
+of the grid.
+"""
 
 # %% load data
 ncfiles = r"/mnt/c/users/bassi/data 2 - Copy/*.nc"
@@ -20,7 +34,7 @@ ncfiles = r"/mnt/c/users/bassi/data 2 - Copy/*.nc"
 # https://geonode.wfp.org/layers/esri_gn:geonode:wld_trs_ports_wfp
 # download:
 # https://geonode.wfp.org/geoserver/wfs?typename=geonode%3Awld_trs_ports_wfp&outputFormat=csv&version=1.0.0&request=GetFeature&service=WFS
-ports_coords = []
+supply_coords = []
 # get ports locations
 from csv import reader
 # skip first line i.e. read header first and then iterate over each row od csv as a list
@@ -32,7 +46,7 @@ with open(r"./data/wld_trs_ports_wfp.csv", 'r') as read_obj:
         # Iterate over each row after the header in the csv
         for row in csv_reader:
             # row variable is a list that represents a row in csv
-            ports_coords.append((float(row[12]), float(row[11])))
+            supply_coords.append((float(row[12]), float(row[11])))
 
 # %%
 # create reader and initialize objects
@@ -49,13 +63,13 @@ delta = 0.2
 
 # %%
 # prepare and run simulation
-first_lonlats, last_lonlats, supply, sectors = run_for_connectivity_domain(o,
+initial_lonlats, final_lonlats, supply, sectors = run_for_connectivity_domain(o,
                                                                            duration=timedelta(days=35),
                                                                            time_step=timedelta(hours=24),
                                                                            domain=domain,
-                                                                           supply_coords=ports_coords,
+                                                                           supply_coords=supply_coords,
                                                                            delta=delta,
-                                                                           d_supply=3500,
+                                                                           supply_amount=3500,
                                                                            time=[ncreader.start_time + timedelta(0),
                                                                                  ncreader.start_time + timedelta(
                                                                                      34) + timedelta(0)],
@@ -64,7 +78,7 @@ first_lonlats, last_lonlats, supply, sectors = run_for_connectivity_domain(o,
 
 # %%
 # get connectivity matrix
-C = calculate_connectivity_matrix(first_lonlats, last_lonlats, supply_org=supply, sectors=sectors)
+C = calculate_connectivity_matrix(initial_lonlats, final_lonlats, supply_org=supply, sectors=sectors)
 
 # %%
 # get connectivity values
