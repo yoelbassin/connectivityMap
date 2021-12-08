@@ -16,13 +16,14 @@ o.set_config('seed:ocean_only', False)
 o.add_reader([reader])
 domain = [33.6, 34.5, 31.5, 34]
 sectors = sectors_from_shapefile(shapefile)
+d_supply = 500
 
 # %%
 # prepare and run simulation
 first_lonlats, last_lonlats, supply, sectors = run_for_connectivity_polygons(o,
                                                                              duration=timedelta(days=5),
                                                                              time_step=timedelta(hours=12),
-                                                                             d_supply=500,
+                                                                             d_supply=d_supply,
                                                                              sectors=sectors,
                                                                              time=[reader.start_time + timedelta(0),
                                                                                    reader.start_time + timedelta(
@@ -45,7 +46,11 @@ import numpy as np
 
 cmap = plt.get_cmap('viridis')
 cmap.set_under(color='white')
-plt.imshow(C, cmap=cmap, interpolation='nearest', vmin=0.001)
+fig, ax = plt.subplots(1,1)
+
+img = ax.imshow(C/d_supply, cmap=cmap, interpolation='nearest', vmin=0.001)
+
+fig.colorbar(img)
 plt.show()
 
 # plot connectivity categories
