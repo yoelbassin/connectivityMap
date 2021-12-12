@@ -10,6 +10,7 @@ import numpy as np
 from opendrift.readers import reader_netCDF_CF_generic
 from opendrift.models.oceandrift import OceanDrift, timedelta
 from calculate_connectivity import *
+from datetime import datetime
 """
 This demo is an example for the use of ConnectivityMap using a shape file.
 The demo receives a shapefile with polygons that describe sea sectors, and using
@@ -33,14 +34,15 @@ supply_amount = 3000
 
 # %%
 # prepare and run simulation
+start_date = datetime.strptime('10 January, 2020', "%d %B, %Y")
+end_date = datetime.strptime('29 January, 2020', "%d %B, %Y")
 first_lonlats, last_lonlats, supply, sectors = run_for_connectivity_polygons(o,
                                                                              duration=timedelta(days=30),
                                                                              time_step=timedelta(hours=12),
                                                                              supply_ammount=supply_amount,
                                                                              sectors=sectors,
-                                                                             time=[reader.start_time + timedelta(0),
-                                                                                   reader.start_time + timedelta(
-                                                                                       29) + timedelta(0)], )
+                                                                             time=[start_date,
+                                                                                   end_date], )
 
 # %%
 # get connectivity matrix
