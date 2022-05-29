@@ -2,20 +2,10 @@
 Calculate and create connectivity map and matrix from lagrangian trajectory model
 This project is based on Opendrift, but can be used with different models
 To create a connectivity map and matrix run the following functions:
-1. `run_for_connectivity_polygons` \ `run_for_connectivity_domain` - to run the lagrangian model and create the sectors, this will return 
-    1. `first_lonlats` - `{'lon':lons,'lat':lats}`, the origin of the elements of the model
-    2. `last_lonlats` - `{'lon':lons, 'lat':lats}`, the last location of the elements of the model
-    3. `supply` - the number of elements supplied by each sector
-    4. `sectors` - a list containing (lon, lat) points of the verticies of the sectors
-  This can be step skiped if you already have this parameters
-2. `calculate_connectivity_matrix(first_lonlats, last_lonlats, supply, sectors)` - to create the connectivity matrix from the lagrangian model. This will return `C` - the connectivity matrix <p align="center">
-        <img src="https://github.com/yoelbassin/connectivityMap/blob/master/data/pictures/connectivity_matrix.png" width="300"/>
-    </p>
-3. `categorize_sectors(sectors, C)` - to categorize the sectors by connectivity categories
-
-4. `plot_connectivity_pylygons(sectors, sector_categories)` \ `plot_connectivity_domain(sectors, sector_categories)` - this will plot the `sectors` and color each sector with an appropriate color to its value from `sector_categories` (i.e. `sector[i]` will be plotted with the color for the number at `sector_categories[i]`)
+1. `Sector.create_sectors_domain` \ `Sector.create_sectors_domain` - To create the sectors for the model to analize
+2. `model = Connectivity(lons, lats, sectors)` using the lons and lats of the lagrangian trajectories, and sectors generated from (1).
+3. `model.plot(model.n_settle_values, title=Nsettle)` will plot the model with its 'n_settle' values.
 <p align="center">
-    <img src="https://github.com/yoelbassin/connectivityMap/blob/master/data/pictures/connectivity_categories.png" width="460">
-    <img src="https://github.com/yoelbassin/connectivityMap/blob/master/data/pictures/connectivity_categories_grid.png" width="400">
+    <img src="https://github.com/yoelbassin/connectivityMap/blob/master/data/pictures/n_settle.png" width=400>
 </p>
 
